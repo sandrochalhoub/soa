@@ -13,7 +13,7 @@ public class Mission {
         this.status = 0; // Par défaut, la mission est en attente lors de la création
     }
 
-    public String getId() {
+    public String getID() {
         return this.id;
     }
 
