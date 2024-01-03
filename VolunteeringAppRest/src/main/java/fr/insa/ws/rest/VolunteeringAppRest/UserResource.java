@@ -1,7 +1,11 @@
 package fr.insa.ws.rest.VolunteeringAppRest;
 
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,40 +19,57 @@ public class UserResource {
     @Path("helprequester/{name}")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
-    public User manageHelpRequester(@PathParam("name") String name) {
+    public Response manageHelpRequester(@PathParam("name") String name, @Context UriInfo uriInfo) {
         HelpRequester user = new HelpRequester(name);
         users.add(user);
         System.out.println("Added help requester " + name + " with id: " + user.getID());
-        return user;
+        
+        // Construct HATEOAS links
+        String baseUri = uriInfo.getBaseUriBuilder().path(UserResource.class).build().toString();
+        user.addLink(createLink(baseUri, "/" + user.getID(), "self", "GET"));
+        user.addLink(createLink(baseUri, "/request/" + user.getID() + "/{description}", "requestHelp", "POST"));
+
+        return Response.ok().entity(user).build();
     }
 
     @POST
     @Path("volunteer/{name}")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
-    public User manageVolunteer(@PathParam("name") String name) {
+    public Response manageVolunteer(@PathParam("name") String name, @Context UriInfo uriInfo) {
         Volunteer user = new Volunteer(name);
         users.add(user);
         System.out.println("Added volunteer " + name + " with id: " + user.getID());
-        return user;
+        
+        // Construct HATEOAS links
+        String baseUri = uriInfo.getBaseUriBuilder().path(UserResource.class).build().toString();
+        user.addLink(createLink(baseUri, "/" + user.getID(), "self", "GET"));
+        user.addLink(createLink(baseUri, "/accept/" + user.getID() + "/{missionID}", "acceptMission", "POST"));
+
+        return Response.ok().entity(user).build();
     }
 
     @POST
     @Path("admin/{name}")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
-    public User manageAdmin(@PathParam("name") String name) {
+    public Response manageAdmin(@PathParam("name") String name, @Context UriInfo uriInfo) {
         Admin user = new Admin(name);
         users.add(user);
         System.out.println("Added admin " + name + " with ID: " + user.getID());
-        return user;
+        
+        // Construct HATEOAS links
+        String baseUri = uriInfo.getBaseUriBuilder().path(UserResource.class).path(user.getID()).build().toString();
+        user.addLink(createLink(baseUri, "", "self", "GET"));
+
+        return Response.ok().entity(user).build();
     }
     
     @POST
     @Path("request/{userId}/{description}")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
-    public Mission requestHelp(@PathParam("userId") String userId, @PathParam("description") String description) {
+    public Mission requestHelp(@PathParam("userId") String userId, @PathParam("description") String description, @Context UriInfo uriInfo) {
         // Check the user exists and is a HelpRequester
         User user = getUserById(userId);
 
@@ -116,5 +137,13 @@ public class UserResource {
             }
         }
         return null;
+    }
+    
+    private Link createLink(String baseUri, String path, String rel, String method) {
+        Link link = new Link();
+        link.setUri(baseUri + path);
+        link.setRel(rel);
+        link.setMethod(method);
+        return link;
     }
 }
