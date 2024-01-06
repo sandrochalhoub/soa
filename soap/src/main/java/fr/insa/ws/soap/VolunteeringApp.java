@@ -7,7 +7,7 @@ import javafx.application.Application;
 public class VolunteeringApp {
 	
 	public static String host = "localhost";
-	public static short port = 8082;
+	public static short port = 8080;
 	
 	public void demarrerService() {
 		String url = "http://" + host + ":" + port + "/";
